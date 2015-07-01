@@ -1,5 +1,5 @@
 # easyfilter
-A very simple JS library for adding ugly but extremely useful table filters.
+A very simple JS library for adding ugly but extremely useful table filters. Under 100 LOCs.
 
 ## How to use it:
 
