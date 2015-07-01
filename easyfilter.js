@@ -1,67 +1,77 @@
-function testPatternAgainstValue(p, v) {
-  return !v.includes(p);
+function testPatternAgainstValue(v, p, l) {
+    if (p.lenght == 0) return true;
+
+    if (l == "text") {
+        return v.includes(p);
+    } else if (l == "numeric") {
+        return eval(v + p)
+    }
+    return true;
+}
+
+function updateTable(table) {
+
+    // Make an array with the cells with filter inputs
+    var cellsWithPatterns = $(table).find('thead tr[has-filter-inputs] th');
+
+    // Read patterns from cells into an array of objects
+    var patterns = cellsWithPatterns.map(function(idx, cell) {;
+        if ($(cell).children('input').length > 0)
+            return  {
+                        pattern: $(cell).children('input').val(),
+                        logic: $(cell).children('input').attr('filter-logic')
+                    };
+        return {logic: null};
+    }).toArray();
+
+    // Compare each table row to the pattern and
+    // hide it
+    $(table).find('tbody tr').each(function (j, row) {
+        var rowCells = $(row).find('td');
+        $(row).show();
+        for (var i = 0; i < rowCells.length; i++) {
+            var text = $(rowCells[i]).text();
+            var patt = patterns[i];
+            if (patt['logic']) {
+                console.log(text, patt['pattern'], testPatternAgainstValue(text, patt['pattern']));
+
+                if (!testPatternAgainstValue(text, patt['pattern'], patt['logic'])) {
+                    $(row).hide();
+                }
+            }
+        }
+        });
 }
 
 function updateFilters () {
     console.log('updateFilters');
-    
-    $('table.ef').each(function(i, table) {
-        var patterns = $(table).find('thead tr.ef-filter-row th').map(function (j, columnFilter) {
-            if ($(columnFilter).hasClass('ef-column-filter')) {
-                var inputBox = $(columnFilter).find('input');
-                return inputBox.val();
-            } else {
-                return "";
-            }
-        }).toArray();      
-       
-        $(table).find('tbody tr').each(function (j, row) {
-           
-
-            var values = $(row).find('td').map(function (k, cell) {
-                return $(cell).text();
-            }).toArray();
-
-            patternsAndValues = _.zip(patterns, values);
-            results = _.map(patternsAndValues, function (e) {
-                return testPatternAgainstValue(e[0], e[1]);
-            });
-
-            if (_.any(results)) {
-                $(row).hide();
-            
-            } else {
-                $(row).show();
-            }
-
-        });
-
-
-     });
-
-    
+    $('table[is-filterable]').each(function(i, table) {
+        updateTable(table);
+    });
 }
 
 function setupTable(t) {
 
     $(t).find('thead')
-        .append("<tr class='ef-filter-row'></tr>");
+        .append("<tr has-filter-inputs></tr>");
 
-    $(t).find('thead tr.ef-header th').each(function (i, elem) {
-        if ($(elem).hasClass('ef-column')) {
-            $(t).find('thead tr.ef-filter-row').append("<th class='ef-column-filter'><input class='ef-input'></input></th>"); 
+    $(t).find('thead tr[has-column-names] th').each(function (i, elem) {
+        if ($(elem).attr('is-filter') != null) {
+            $(t).find('thead tr[has-filter-inputs]')
+                .append("<th><input filter-logic='" + $(elem).attr('filter-logic') + "'></input></th>");
         } else {
-            $(t).find('thead tr.ef-filter-row').append("<th class='ef-column-filter-nofilter'></th>"); 
+            $(t).find('thead tr[has-filter-inputs]')
+                .append("<th></th>");
         }
     });
 
-    $(".ef-input").change(function () {
-       updateFilters(); 
+    $("table[is-filterable] thead tr th input").change(function () {
+       updateFilters();
     });
 }
 
 function setupFilters() {
-    $("table.ef").each(function () {
+    $("table[is-filterable]").each(function () {
         setupTable(this);
     });
 }
