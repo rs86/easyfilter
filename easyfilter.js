@@ -2,6 +2,10 @@
 (function() {
   var hasInputBox, matchFilter, matchNumber, matchText, setupFilters, setupTable, updateFilters, updateTable, zip;
 
+  hasInputBox = function(elem) {
+    return $(elem).children('input').length > 0;
+  };
+
   zip = function(a, b) {
     var i, results;
     i = 0;
@@ -13,35 +17,30 @@
     return results;
   };
 
-  matchText = function(pattern, value) {
-    return value.toLowerCase().includes(pattern.toLowerCase());
+  setupFilters = function() {
+    return $('table[filterable-table]').each(function(i, table) {
+      return setupTable(table);
+    });
   };
 
-  matchNumber = function(pattern, value) {
-    value = value.replace(",", "");
-    if (/^\d/.test(pattern)) {
-      return value.includes(pattern);
-    }
-    return eval(value + pattern);
+  setupTable = function(t) {
+    $(t).find('thead').append('<tr filterable-column-inputs></tr>');
+    $(t).find('thead tr[filterable-header-row] th').each(function(i, elem) {
+      if ($(elem).is('[filterable-column]')) {
+        return $(t).find('thead tr[filterable-column-inputs]').append('<th><input filterable-logic=\'' + $(elem).attr('filterable-logic') + '\'></input></th>');
+      } else {
+        return $(t).find('thead tr[filterable-column-inputs]').append('<th></th>');
+      }
+    });
+    return $('table[filterable-table] thead tr th input').change(function() {
+      return updateFilters();
+    });
   };
 
-  matchFilter = function(filter, value) {
-    var logic, pattern;
-    pattern = filter['pattern'];
-    logic = filter['logic'];
-    if ((logic === null) || (pattern.length === 0)) {
-      return true;
-    }
-    if (logic === 'text') {
-      return matchText(pattern, value);
-    } else if (logic === 'numeric') {
-      return matchNumber(pattern, value);
-    }
-    return true;
-  };
-
-  hasInputBox = function(elem) {
-    return $(elem).children('input').length > 0;
+  updateFilters = function() {
+    return $('table[filterable-table]').each(function(i, table) {
+      return updateTable(table);
+    });
   };
 
   updateTable = function(table) {
@@ -82,30 +81,31 @@
     });
   };
 
-  updateFilters = function() {
-    return $('table[filterable-table]').each(function(i, table) {
-      return updateTable(table);
-    });
+  matchText = function(pattern, value) {
+    return value.toLowerCase().includes(pattern.toLowerCase());
   };
 
-  setupTable = function(t) {
-    $(t).find('thead').append('<tr filterable-column-inputs></tr>');
-    $(t).find('thead tr[filterable-header-row] th').each(function(i, elem) {
-      if ($(elem).is('[filterable-column]')) {
-        return $(t).find('thead tr[filterable-column-inputs]').append('<th><input filterable-logic=\'' + $(elem).attr('filterable-logic') + '\'></input></th>');
-      } else {
-        return $(t).find('thead tr[filterable-column-inputs]').append('<th></th>');
-      }
-    });
-    return $('table[filterable-table] thead tr th input').change(function() {
-      return updateFilters();
-    });
+  matchNumber = function(pattern, value) {
+    value = value.replace(",", "");
+    if (/^\d/.test(pattern)) {
+      return value.includes(pattern);
+    }
+    return eval(value + pattern);
   };
 
-  setupFilters = function() {
-    return $('table[filterable-table]').each(function(i, table) {
-      return setupTable(table);
-    });
+  matchFilter = function(filter, value) {
+    var logic, pattern;
+    pattern = filter['pattern'];
+    logic = filter['logic'];
+    if ((logic === null) || (pattern.length === 0)) {
+      return true;
+    }
+    if (logic === 'text') {
+      return matchText(pattern, value);
+    } else if (logic === 'numeric') {
+      return matchNumber(pattern, value);
+    }
+    return true;
   };
 
   $(document).ready(setupFilters);
