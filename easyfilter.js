@@ -1,31 +1,41 @@
-function testPatternAgainstValue(v, p) {
-  if (p.length == 0)
+function testPatternAgainstValue(v, p, l) {
+    if (p.lenght == 0) return true;
+
+    if (l == "text") {
+        return v.includes(p);
+    } else if (l == "numeric") {
+        return eval(v + p)
+    }
     return true;
-  return v.includes(p);
 }
 
 function updateTable(table) {
 
-    var cellsWithPatterns = $(table).find('thead tr.ef-filter-row th');
+    // Make an array with the cells with filter inputs
+    var cellsWithPatterns = $(table).find('thead tr[has-filter-inputs] th');
+
+    // Read patterns from cells into an array of objects
     var patterns = cellsWithPatterns.map(function(idx, cell) {;
         if ($(cell).children('input').length > 0)
             return  {
                         pattern: $(cell).children('input').val(),
                         logic: $(cell).children('input').attr('filter-logic')
                     };
-        return "";
+        return {logic: null};
     }).toArray();
 
+    // Compare each table row to the pattern and
+    // hide it
     $(table).find('tbody tr').each(function (j, row) {
         var rowCells = $(row).find('td');
         $(row).show();
         for (var i = 0; i < rowCells.length; i++) {
             var text = $(rowCells[i]).text();
             var patt = patterns[i];
-            if (patt != "") {
+            if (patt['logic']) {
                 console.log(text, patt['pattern'], testPatternAgainstValue(text, patt['pattern']));
 
-                if (!testPatternAgainstValue(text, patt['pattern'])) {
+                if (!testPatternAgainstValue(text, patt['pattern'], patt['logic'])) {
                     $(row).hide();
                 }
             }
@@ -35,7 +45,7 @@ function updateTable(table) {
 
 function updateFilters () {
     console.log('updateFilters');
-    $('table.ef').each(function(i, table) {
+    $('table[is-filterable]').each(function(i, table) {
         updateTable(table);
     });
 }
@@ -43,25 +53,25 @@ function updateFilters () {
 function setupTable(t) {
 
     $(t).find('thead')
-        .append("<tr class='ef-filter-row'></tr>");
+        .append("<tr has-filter-inputs></tr>");
 
-    $(t).find('thead tr.ef-header th').each(function (i, elem) {
-        if ($(elem).attr('is-filter')) {
-            $(t).find('thead tr.ef-filter-row')
+    $(t).find('thead tr[has-column-names] th').each(function (i, elem) {
+        if ($(elem).attr('is-filter') != null) {
+            $(t).find('thead tr[has-filter-inputs]')
                 .append("<th><input filter-logic='" + $(elem).attr('filter-logic') + "'></input></th>");
         } else {
-            $(t).find('thead tr.ef-filter-row')
+            $(t).find('thead tr[has-filter-inputs]')
                 .append("<th></th>");
         }
     });
 
-    $(".ef thead tr th input").change(function () {
+    $("table[is-filterable] thead tr th input").change(function () {
        updateFilters();
     });
 }
 
 function setupFilters() {
-    $("table.ef").each(function () {
+    $("table[is-filterable]").each(function () {
         setupTable(this);
     });
 }
